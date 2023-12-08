@@ -1,5 +1,5 @@
 # path = 'input.txt'
-path = 'testInput.txt'
+path = 'input.txt'
 
 cards = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
 handImages = [[1,1,1,1,1], [1,1,1,2],[1,2,2],[1,1,3],[2,3],[1,4],[5]]
@@ -42,21 +42,26 @@ def getImageOrderWithJoker(countedHand):
     else:
         print(countedHand)
         numberOfJokers = countedHand['J']
+        if(numberOfJokers == 5):
+            return xOfAKindToValue(numberOfJokers)
         countedHand.pop('J')
         sortedValues = dict(sorted(countedHand.items(), key=lambda card: card[1], reverse=True))
         mostOccurences = sortedValues[list(sortedValues)[0]] 
-        secondMostOccurences = sortedValues[list(sortedValues)[1]] 
         if(mostOccurences == 1):
             # X of a kind
             x = 1+numberOfJokers
             return xOfAKindToValue(x)
         elif (mostOccurences == 2):
-            if(secondMostOccurences == 2):
-                # Full house
-                return 4
-            else:
-                # X of a kind
-                return xOfAKindToValue(2 + numberOfJokers)
+            if(numberOfJokers < 3):
+                secondMostOccurences = sortedValues[list(sortedValues)[1]] 
+                if(secondMostOccurences == 2):
+                    # Full house
+                    return 4
+                else:
+                    # X of a kind
+                    return xOfAKindToValue(2 + numberOfJokers)
+            else: 
+                return xOfAKindToValue(5)
         elif (mostOccurences == 3):
             return xOfAKindToValue(3 + numberOfJokers)
         else:
@@ -108,15 +113,58 @@ def sortHands(hands):
     # for index in indexedHands
     # return sortedHands
 
+def getSortedHandValues(hand):
+    foundCards = {}
+    for card in list(hand[0]):
+        if(card in foundCards):
+            foundCards[card] += 1
+        else:
+            foundCards[card] = 1
+    sortedValues = dict(sorted(foundCards.items(), key=lambda card: card[1], reverse=True))
+
+    return [sortedValues, hand[1]]
+
+def getRankOfCard(card):
+    if(card == 'J'):
+        return -1
+    else:
+        return -cards.index(card)
+
+def getRankOfHand(hand):
+    ranks = []
+    for card in hand:
+        ranks.append(getRankOfCard(card))
+    return ranks
+
+def sortIndexedHands(hands):
+    countedHands = []
+    for hand in hands:
+        countedHands.append(getSortedHandValues(hand))
+    handsWithJoker = list(filter(lambda hand: 'J' in hand[0], countedHands))
+    handsWithoutJoker = list(filter(lambda hand: 'J' not in hand[0], countedHands))
+    sortedHandsWithJoker = sorted(handsWithJoker, key=lambda hand: (hand[0]['J'], getRankOfHand(list(hand[0].keys()))))
+    sortedHandsWithoutJoker = sorted(handsWithoutJoker, key=lambda hand: getRankOfHand(list(hand[0].keys())), reverse=True)
+    sortedHandsWithJoker.extend(sortedHandsWithoutJoker)
+    return sortedHandsWithJoker
+ 
+    # print(sortedCountedHands)
+    
 
 
 def sortHandsWithJoker(hands):
     indexedHands = {1:[], 2:[], 3:[], 4:[],5:[],6:[],7:[]}
     for hand in hands:
         indexedHands[getValueOfHandWithJoker(hand)].append(hand)
+    product = 0
+    ctr = 1
     for index in indexedHands:
-        print(f'index: {index} indexedHands[index] = {indexedHands[index]}')
-        print(sorted(indexedHands[index], key=lambda hand: (hand[0].count('J'), )))
+        for hand in sortIndexedHands(indexedHands[index]):
+            print(hand)
+            product += hand[1] * ctr
+            ctr += 1
+    print(product)
+
+        
 
 def part1(lines):
     print("--- Part 1 ---")
